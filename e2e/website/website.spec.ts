@@ -1118,3 +1118,81 @@ test.describe('Acessibilidade básica', () => {
     expect(['A', 'BUTTON', 'INPUT', 'TEXTAREA']).toContain(focused)
   })
 })
+
+// ─── Verificação de conteúdo entre páginas ────────────────────────────────────
+
+test.describe('Conteúdo único por página — hero headings', () => {
+  const heroMap: Record<string, RegExp> = {
+    '/':            /saúde acessível/i,
+    '/officedoctor': /officedoctor/i,
+    '/fastclinic':   /fastclinic/i,
+    '/gymcheck':     /gym\s*check/i,
+    '/skincare':     /skincare|experiência única/i,
+    '/carteirinha':  /carteirinha/i,
+    '/blog':         /conteúdo para quem cuida/i,
+  }
+
+  for (const [path, pattern] of Object.entries(heroMap)) {
+    test(`${path} — heading principal é específico da página`, async ({ page }) => {
+      await page.goto(path)
+      await page.waitForLoadState('domcontentloaded')
+      const heading = page.locator('h1, h2').first()
+      await expect(heading).toBeVisible({ timeout: 10_000 })
+      await expect(heading).toHaveText(pattern)
+    })
+  }
+})
+
+test.describe('FAQ "Vocês fazem Telemedicina?" — presença por página', () => {
+  const pagesComTelemedicina = ['/officedoctor', '/fastclinic', '/carteirinha']
+  const pagesSemTelemedicina = ['/gymcheck', '/skincare']
+
+  for (const path of pagesComTelemedicina) {
+    test(`${path} — contém FAQ "Vocês fazem Telemedicina?"`, async ({ page }) => {
+      await page.goto(path)
+      await page.waitForLoadState('domcontentloaded')
+      await expect(page.getByText(/vocês fazem telemedicina\?/i).first()).toBeVisible({ timeout: 10_000 })
+    })
+  }
+
+  for (const path of pagesSemTelemedicina) {
+    test(`${path} — NÃO contém FAQ "Vocês fazem Telemedicina?"`, async ({ page }) => {
+      await page.goto(path)
+      await page.waitForLoadState('domcontentloaded')
+      await expect(page.getByText(/vocês fazem telemedicina\?/i).first()).toBeHidden()
+    })
+  }
+})
+
+test.describe('FAQ de proteção de dados — substantivo correto por página', () => {
+  const dataMap: Array<{ path: string; pattern: RegExp }> = [
+    { path: '/officedoctor', pattern: /dados de saúde dos colaboradores ficam protegidos/i },
+    { path: '/fastclinic',   pattern: /dados de saúde dos pacientes ficam protegidos/i },
+    { path: '/gymcheck',     pattern: /dados de saúde dos alunos ficam protegidos/i },
+    { path: '/skincare',     pattern: /dados dos usuários ficam protegidos/i },
+  ]
+
+  for (const { path, pattern } of dataMap) {
+    test(`${path} — pergunta de dados usa o público correto`, async ({ page }) => {
+      await page.goto(path)
+      await page.waitForLoadState('domcontentloaded')
+      await expect(page.getByText(pattern).first()).toBeVisible({ timeout: 10_000 })
+    })
+  }
+})
+
+test.describe('FAQ "Quem contrata?" — cada produto menciona o próprio nome', () => {
+  const contractMap: Array<{ path: string; pattern: RegExp }> = [
+    { path: '/officedoctor', pattern: /quem contrata o office doctor/i },
+    { path: '/fastclinic',   pattern: /quem contrata o fast clinic/i },
+    { path: '/skincare',     pattern: /quem contrata o skincare/i },
+  ]
+
+  for (const { path, pattern } of contractMap) {
+    test(`${path} — FAQ "Quem contrata" menciona o produto correto`, async ({ page }) => {
+      await page.goto(path)
+      await page.waitForLoadState('domcontentloaded')
+      await expect(page.getByText(pattern).first()).toBeVisible({ timeout: 10_000 })
+    })
+  }
+})

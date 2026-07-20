@@ -1,23 +1,21 @@
 import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: './e2e/website',
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  retries: 0,
   reporter: 'html',
   use: {
     trace: 'on-first-retry',
+    screenshot: 'on'
   },
   projects: [
     {
       name: 'website',
-      testMatch: '**/website/**/*.spec.ts',
       use: {
         ...devices['Desktop Chrome'],
-        baseURL: 'https://website--prj-dev-infra-01.us-central1.hosted.app',
-      },
-    },
-  ],
+        baseURL: 'https://olivesaude.com.br'
+      }
+    }
+  ]
 })
